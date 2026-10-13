@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pahlawan Hijau Adiwiyata</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Comic Neue', cursive;
+            background: linear-gradient(135deg, #a8e6cf, #dbede3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #2d5a27;
+        }
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 30px 40px;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            border: 3px solid #81c784;
+        }
+        h1, h2 {
+            color: #1b5e20;
+        }
+        #level-selection-screen h2 {
+            margin-bottom: 30px;
+        }
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+        }
+        .level-button {
+            background-color: #e8f5e9;
+            border: 2px solid #2e7d32;
+            border-radius: 15px;
+            padding: 20px 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1b5e20;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            position: relative;
+        }
+        .level-button:hover {
+            transform: translateY(-5px);
+            background-color: #c8e6c9;
+        }
+        .level-button.locked {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        .level-button.locked .lock-icon {
+            font-size: 2em;
+        }
+        .level-button.locked:hover {
+            transform: none;
+            background-color: #f5f5f5;
+        }
+        .level-info, .score-info {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .question-box {
+            background-color: #e8f5e9;
+            border: 2px solid #2e7d32;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        #student-name-input {
+            border: 2px solid #2e7d32;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1em;
+            text-align: center;
+            width: 80%;
+            max-width: 250px;
+            margin: 5px auto;
+            display: block;
+            font-family: 'Comic Neue', cursive;
+        }
+        .answer-input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .answer-input-group input {
+            border: 2px solid #2e7d32;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1em;
+            text-align: center;
+            width: 80px;
+            font-family: 'Comic Neue', cursive;
+        }
+        #single-answer-input {
+            border: 2px solid #2e7d32;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1em;
+            text-align: center;
+            width: 150px;
+            font-family: 'Comic Neue', cursive;
+        }
+
+        button {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 12px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s, background-color 0.2s;
+            font-family: 'Comic Neue', cursive;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            background-color: #1b5e20;
+        }
+        .feedback { margin-top: 15px; font-weight: bold; min-height: 20px; }
+        .feedback.correct { color: #2e7d32; }
+        .feedback.incorrect { color: #c62828; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="intro-screen">
+            <h1>🌱 Pahlawan Hijau Adiwiyata 🌱</h1>
+            <p>Selamat datang Kader Adiwiyata! Siap menjaga kelestarian lingkungan sekolah dengan ilmu rasio? Siapa namamu?</p>
+            <input type="text" id="student-name-input" placeholder="Nama Lengkap Sesuai Absen">
+            <button onclick="startGame()">Mulai Petualangan!</button>
+        </div>
+        
+        <div id="level-selection-screen" class="hidden">
+            <h2>Pilih Level Misi Lingkunganmu!</h2>
+            <div class="level-grid">
+                <div class="level-button" onclick="selectLevel(1)">Level 1</div>
+                <div class="level-button" onclick="selectLevel(2)">Level 2</div>
+                <div class="level-button" onclick="selectLevel(3)">Level 3</div>
+                <div class="level-button" onclick="selectLevel(4)">Level 4</div>
+                <div class="level-button" onclick="selectLevel(5)">Level 5</div>
+            </div>
+             <button onclick="resetProgress()">Reset Progress</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div class="level-info"><h2></h2><p></p></div>
+            <div class="score-info">Skor: <span id="score">0</span> / 100</div>
+            <div class="question-box">
+                <p id="question-text"></p>
+                <div id="input-area">
+                    <div id="ratio-input-group" class="answer-input-group hidden">
+                        <input type="text" id="answer-input-1">
+                        :
+                        <input type="text" id="answer-input-2">
+                    </div>
+                    <input type="text" id="single-answer-input" class="hidden">
+                    <button id="submit-btn" onclick="checkAnswer()">Jawab!</button>
+                </div>
+                <div id="feedback-text" class="feedback"></div>
+                <button id="next-btn" class="hidden" onclick="nextQuestion()">Soal Selanjutnya</button>
+                <button id="back-to-levels-btn" class="hidden" onclick="showLevelSelection()">Kembali ke Pilihan Level</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h1>🎉 Semua Misi Selesai! 🎉</h1>
+            <p>Selamat, <span id="student-name-final"></span>!</p>
+            <p>Kamu resmi menjadi Pahlawan Hijau Adiwiyata Sekolah!</p>
+            <button onclick="showLevelSelection()">Pilih Level Lain</button>
+        </div>
+    </div>
+
+    <script>
+        // PENTING: Salin URL Google Apps Script milik Anda ke variabel SCRIPT_URL di bawah ini
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkDhlREa0XA18aDh1RaQCqEvOHdsqIYJGVHvbP1DuJcijfQye-IncZnWWVWUnCcu8/exec';
+               
+        const questions = {
+            level1: [
+                { q: "Di bank sampah sekolah, Kader Adiwiyata memilah 🍂 6 kg sampah organik dan 🥤 15 kg sampah anorganik. Berapa rasio sampah organik terhadap anorganik?", a: "6:15" },
+                { q: "Di green house sekolah, terdapat 🌿 8 bibit puring dan 🌺 12 bibit bunga kertas. Berapa rasio bibit puring terhadap bunga kertas?", a: "8:12" },
+                { q: "Untuk kerajinan daur ulang, siswa mengumpulkan 🍾 15 botol plastik dan 📦 10 galon daur ulang. Berapa rasio botol plastik terhadap galon daur ulang?", a: "15:10" },
+                { q: "Untuk menyiram tanaman TOGA, digunakan 🪣 9 ember air bekas wudhu dan 🪴 12 pot tanaman. Berapa rasio ember air terhadap pot tanaman?", a: "9:12" },
+                { q: "Untuk pembuatan pupuk, kader mencampur 🍂 10 karung dedaunan kering dengan 💩 25 karung pupuk kandang. Berapa rasio dedaunan kering terhadap pupuk kandang?", a: "10:25" },
+                { q: "Di kebun toga sekolah, ada 🌱 12 bibit jahe dan 🌿 18 bibit kunyit. Berapa rasio bibit jahe terhadap bibit kunyit?", a: "12:18" },
+                { q: "Siswa mengumpulkan 🥤 14 sedotan plastik dan 🍾 21 botol kaca untuk pameran daur ulang. Berapa rasio sedotan plastik terhadap botol kaca?", a: "14:21" },
+                { q: "Dalam bak komposter, dimasukkan 🍂 15 kg dedaunan basah dan 🍁 20 kg dedaunan kering. Berapa rasio dedaunan basah terhadap dedaunan kering?", a: "15:20" },
+                { q: "Tim Adiwiyata menyediakan 🪴 16 pot gantung dan 🪴 24 pot duduk di koridor sekolah. Berapa rasio pot gantung terhadap pot duduk?", a: "16:24" },
+                { q: "Di kolam retensi sekolah, terdapat 🐟 20 ekor ikan nila dan 🐟 30 ekor ikan lele. Berapa rasio ikan nila terhadap ikan lele?", a: "20:30" },
+                { q: "Kader Adiwiyata menyiapkan 🧹 8 sapu lidi dan 🗑️ 12 tempat sampah organik untuk kerja bakti. Berapa rasio sapu lidi terhadap tempat sampah organik?", a: "8:12" },
+                { q: "Untuk ecobrick, terkumpul 🍾 18 botol plastik ukuran 600 ml dan 🍾 27 botol plastik ukuran 1.500 ml. Berapa rasio botol 600 ml terhadap botol 1.500 ml?", a: "18:27" },
+                { q: "Di kebun buah sekolah, dipanen 🍋 15 buah jeruk nipis dan 🥭 25 buah mangga. Berapa rasio jeruk nipis terhadap mangga?", a: "15:25" },
+                { q: "Tim drainase memasang 🕳️ 12 lubang biopori di area depan dan 🕳️ 20 lubang biopori di area belakang sekolah. Berapa rasio biopori depan terhadap biopori belakang?", a: "12:20" },
+                { q: "Untuk pembuatan MOL, dicampur 🍌 10 kg limbah buah dan 🍚 15 kg nasi basi. Berapa rasio limbah buah terhadap nasi basi?", a: "10:15" },
+                { q: "Di nursery sekolah, terdapat 🌲 14 bibit pohon ketapang dan 🌳 21 bibit pohon mahoni. Berapa rasio bibit ketapang terhadap bibit mahoni?", a: "14:21" },
+                { q: "Kader lingkungan mencatat 💧 18 liter air wudhu daur ulang dan 💧 24 liter air hujan yang tertampung. Berapa rasio air wudhu daur ulang terhadap air hujan?", a: "18:24" },
+                { q: "Siswa mengumpulkan 📜 20 kg kertas koran dan 📦 30 kg kardus bekas di bank sampah. Berapa rasio kertas koran terhadap kardus bekas?", a: "20:30" },
+                { q: "Di taman vertikal sekolah, dipasang 🪴 15 pot tanaman lidah mertua dan 🪴 35 pot tanaman paku-pakuan. Berapa rasio lidah mertua terhadap paku-pakuan?", a: "15:35" },
+                { q: "Untuk vertikultur, digunakan 🪣 16 pipa PVC daur ulang dan 🪵 24 bambu. Berapa rasio pipa PVC terhadap bambu?", a: "16:24" }
+            ],
+            level2: [
+                { q: "Untuk membuat adonan komposter, dibutuhkan 🍂 15 kg dedaunan gugur dan 💧 10 liter aktivator MOL. Dalam bentuk paling sederhana, berapa rasio dedaunan terhadap aktivator?", a: "3:2" },
+                { q: "Di kebun sekolah, ada 🌳 12 pohon ketapang dan 🌲 20 pohon mahoni. Berapa rasio pohon ketapang terhadap pohon mahoni dalam bentuk paling sederhana?", a: "3:5" },
+                { q: "Siswa mengumpulkan 🍾 18 botol plastik bekas dan 🥫 24 kaleng alumunium daur ulang. Sederhanakan rasio botol plastik terhadap kaleng!", a: "3:4" },
+                { q: "Tim Adiwiyata membuat 🧱 14 ecobrick botol kecil dan 🍾 21 ecobrick botol besar. Sederhanakan rasio ecobrick kecil terhadap ecobrick besar!", a: "2:3" },
+                { q: "Untuk pembuatan pupuk cair (POC), dicampur 🌿 20 kg limbah sayuran dan 🍌 8 kg kulit buah. Sederhanakan rasio limbah sayuran terhadap kulit buah!", a: "5:2" },
+                { q: "Di taman TOGA, terdapat 🌿 16 bibit temulawak dan 🌿 24 bibit kunyit. Sederhanakan rasio bibit temulawak terhadap kunyit!", a: "2:3" },
+                { q: "Bank sampah menerima 📦 25 kg kardus bekas dan 📜 15 kg kertas HVS bekas. Sederhanakan rasio kardus terhadap kertas HVS!", a: "5:3" },
+                { q: "Kader lingkungan memasang 🕳️ 18 lubang biopori di lapangan dan 🕳️ 12 lubang biopori di kebun. Sederhanakan rasio biopori lapangan terhadap biopori kebun!", a: "3:2" },
+                { q: "Di rumah hijau sekolah, terdapat 🪴 28 pot tanaman hias daun dan 🪴 21 pot tanaman hias bunga. Sederhanakan rasio tanaman daun terhadap tanaman bunga!", a: "4:3" },
+                { q: "Untuk green house, digunakan 🪵 30 batang bambu dan 🪵 12 batang kayu bekas. Sederhanakan rasio bambu terhadap kayu bekas!", a: "5:2" },
+                { q: "Kolam gizi Adiwiyata menampung 🐟 35 ikan nila dan 🐟 15 ikan gurame. Sederhanakan rasio ikan nila terhadap ikan gurame!", a: "7:3" },
+                { q: "Tim hemat energi mengukur pemakaian ⚡ 24 lampu LED dan ⚡ 18 lampu konvensional. Sederhanakan rasio lampu LED terhadap lampu konvensional!", a: "4:3" },
+                { q: "Untuk penyiraman kebun, ditampung 💧 40 liter air hujan dan 💧 16 liter air bekas wudhu. Sederhanakan rasio air hujan terhadap air wudhu!", a: "5:2" },
+                { q: "Di area parkir sepeda Adiwiyata, terdapat 🚲 32 sepeda siswa dan 🚲 12 sepeda guru. Sederhanakan rasio sepeda siswa terhadap sepeda guru!", a: "8:3" },
+                { q: "Pameran Adiwiyata menampilkan 🎨 27 lukisan bahan alam dan 🧺 18 kerajinan daur ulang. Sederhanakan rasio lukisan terhadap kerajinan!", a: "3:2" },
+                { q: "Kader kebersihan mengumpulkan 🗑️ 20 ember sampah organik dan 🗑️ 35 ember sampah anorganik. Sederhanakan rasio sampah organik terhadap anorganik!", a: "4:7" },
+                { q: "Taman sekolah ditanami 🌹 30 mawar merah dan 🌼 45 melati putih. Sederhanakan rasio mawar merah terhadap melati putih!", a: "2:3" },
+                { q: "Pembuatan vertikultur membutuhkan 🪣 24 botol bekas minyak dan 🍾 36 botol bekas air mineral. Sederhanakan rasio botol minyak terhadap botol air mineral!", a: "2:3" },
+                { q: "Siswa mengolah 💩 42 kg pupuk kandang dan 🍂 18 kg dedaunan kering. Sederhanakan rasio pupuk kandang terhadap dedaunan kering!", a: "7:3" },
+                { q: "Di laboratorium hidroponik, terdapat 🌱 50 netpot kangkung dan 🌱 20 netpot bayam. Sederhanakan rasio kangkung terhadap bayam!", a: "5:2" }
+            ],
+            level3: [
+                { q: "Campuran komposter Adiwiyata menggunakan rasio dedaunan kering dan pupuk kandang 🍂:💩 = 4:3. Jika kader Adiwiyata menggunakan 16 kg dedaunan kering, berapa kg pupuk kandang yang dibutuhkan?", a: "12" },
+                { q: "Rasio botol daur ulang dan kaleng alumunium di bank sampah adalah 🍾:🥫 = 3:5. Jika terkumpul 15 botol plastik, berapa jumlah kaleng alumunium yang terkumpul?", a: "25" },
+                { q: "Untuk menyiram tanaman obat, rasio pupuk cair dan air campuran adalah 🧪:💧 = 2:7. Jika kader menggunakan 8 liter pupuk cair, berapa liter air campuran yang dibutuhkan?", a: "28" },
+                { q: "Rasio bibit TOGA dan bibit pohon pelindung adalah 🪴:🌳 = 3:4. Jika siswa menanam 12 bibit TOGA, berapa bibit pohon pelindung yang ditanam?", a: "16" },
+                { q: "Rasio sampah kertas dan sampah plastik daur ulang adalah 📜:🥤 = 5:2. Jika terkumpul 30 kg sampah kertas, berapa kg sampah plastik yang terkumpul?", a: "12" },
+                { q: "Rasio pembuat biopori kelas 7A dan 7B adalah 👦:👧 = 5:3. Jika kelas 7A membuat 20 lubang biopori, berapa lubang biopori yang dibuat kelas 7B?", a: "12" },
+                { q: "Untuk pembuatan pupuk cair (POC), rasio limbah buah dan air kelapa adalah 🍌:🥥 = 2:5. Jika kader menggunakan 10 kg limbah buah, berapa liter air kelapa yang dibutuhkan?", a: "25" },
+                { q: "Rasio tanaman lidah mertua dan sansivera gantung di koridor adalah 🪴:🪴 = 3:7. Jika terdapat 9 pot lidah mertua, berapa jumlah pot sansivera gantung?", a: "21" },
+                { q: "Rasio botol ecobrick besar dan botol ecobrick kecil adalah 🍾:🍾 = 4:5. Jika terkumpul 20 botol ecobrick besar, berapa botol ecobrick kecil yang terkumpul?", a: "25" },
+                { q: "Di nursery sekolah, rasio bibit mahoni dan bibit ketapang kencana adalah 🌲:🌳 = 2:3. Jika ada 18 bibit mahoni, berapa jumlah bibit ketapang kencana?", a: "27" },
+                { q: "Rasio pupuk kompos matang dan tanah subur untuk media tanam adalah 💩:🪴 = 1:4. Jika digunakan 6 kg pupuk kompos, berapa kg tanah subur yang dibutuhkan?", a: "24" },
+                { q: "Rasio bibit cabai dan bibit terung di kebun TOGA adalah 🌶️:🍆 = 5:4. Jika ditanam 25 bibit cabai, berapa jumlah bibit terung?", a: "20" },
+                { q: "Rasio tempat sampah organik dan anorganik di lorong sekolah adalah 🗑️:🗑️ = 3:2. Jika terdapat 18 tempat sampah organik, berapa jumlah tempat sampah anorganik?", a: "12" },
+                { q: "Rasio kran hemat air dan kran biasa di sekolah Adiwiyata adalah 🚰:🚰 = 7:2. Jika dipasang 21 kran hemat air, berapa jumlah kran biasa?", a: "6" },
+                { q: "Rasio bibit puring dan bibit melati di green house adalah 🌿:🌼 = 4:7. Jika ada 16 bibit puring, berapa jumlah bibit melati?", a: "28" },
+                { q: "Rasio minyak jelantah teruji dan bahan pembuat sabun daur ulang adalah 🛢️:🧪 = 3:1. Jika tersedia 15 liter minyak jelantah, berapa liter bahan kimia pembuat sabun yang dibutuhkan?", a: "5" },
+                { q: "Di kolam gizi, rasio ikan nila merah dan ikan nila hitam adalah 🐟:🐟 = 5:8. Jika terdapat 30 ekor nila merah, berapa ekor nila hitam di kolam?", a: "48" },
+                { q: "Rasio bambu penyangga dan tanaman merambat adalah 🪵:🌿 = 3:5. Jika dipasang 18 batang bambu penyangga, berapa jumlah tanaman merambat yang ditanam?", a: "30" },
+                { q: "Rasio limbah sayuran dan dedaunan kering untuk komposter adalah 🥬:🍂 = 2:3. Jika kader memasukkan 14 kg limbah sayuran, berapa kg dedaunan kering yang dibutuhkan?", a: "21" },
+                { q: "Rasio kaos bekas dan kain perca untuk kerajinan daur ulang adalah 👕:🧵 = 4:9. Jika terkumpul 16 kaos bekas, berapa lembar kain perca yang terkumpul?", a: "36" }
+            ],
+            level4: [
+                { q: "Kader Adiwiyata mengumpulkan 12 botol plastik daur ulang untuk membuat 3 wadah ecobrick. Berapa botol plastik yang dibutuhkan untuk membuat 8 wadah ecobrick?", a: "32" },
+                { q: "Dengan 4 liter pupuk cair organik, siswa dapat menyiram 10 pot tanaman hias. Berapa liter pupuk cair yang dibutuhkan untuk 25 pot tanaman hias?", a: "10" },
+                { q: "6 siswa kader Adiwiyata mampu menanam 18 bibit pohon dalam waktu 1 jam. Berapa bibit pohon yang dapat ditanam oleh 10 siswa dalam waktu yang sama?", a: "30" },
+                { q: "Pembuatan pupuk organik cair menghasilkan 5 liter POC dari 2 kg sisa buah-buahan. Berapa liter POC yang dihasilkan jika digunakan 6 kg sisa buah-buahan?", a: "15" },
+                { q: "Jika 15 kg sampah organik dapat menghasilkan 6 kg pupuk kompos matang, berapa kg sampah organik yang dibutuhkan untuk menghasilkan 10 kg kompos matang?", a: "25" },
+                { q: "Untuk menanam 15 bibit toga, dibutuhkan lahan seluas 3 m². Berapa m² luas lahan yang dibutuhkan untuk menanam 40 bibit toga?", a: "8" },
+                { q: "Di bank sampah, 8 kg kardus bekas dihargai Rp 16.000. Berapa rupiah uang yang diterima siswa jika menjual 25 kg kardus bekas?", a: "50000" },
+                { q: "Dengan 5 liter air wudhu daur ulang, siswa dapat membersihkan 20 pot tanaman. Berapa pot tanaman yang dapat dibersihkan dengan 12 liter air daur ulang?", a: "48" },
+                { q: "10 kg dedaunan kering membutuhkan 2 liter aktivator MOL untuk proses pengomposan. Berapa liter aktivator MOL yang dibutuhkan untuk 35 kg dedaunan kering?", a: "7" },
+                { q: "Siswa membutuhkan 6 botol plastik bekas untuk membuat 2 pot gantung vertikultur. Berapa botol plastik bekas yang dibutuhkan untuk membuat 15 pot gantung?", a: "45" },
+                { q: "Dalam waktu 2 jam, 4 siswa kader lingkungan dapat memilah 14 kg sampah plastik. Berapa kg sampah plastik yang dapat dipilah oleh 10 siswa dalam waktu 2 jam?", a: "35" },
+                { q: "Biopori seluas 4 m² dapat menyerap 20 liter air hujan per menit. Berapa liter air hujan per menit yang dapat diserap oleh area biopori seluas 15 m²?", a: "75" },
+                { q: "Untuk membuat 3 kg kertas daur ulang, dibutuhkan 12 kg kertas bekas. Berapa kg kertas bekas yang dibutuhkan untuk membuat 7 kg kertas daur ulang?", a: "28" },
+                { q: "Satu panel surya sekolah Adiwiyata menghasilkan listrik 150 Watt per 2 jam. Berapa Watt listrik yang dihasilkan oleh 6 panel surya dalam waktu 2 jam?", a: "900" },
+                { q: "Dengan 4 drum komposter, sekolah dapat mengolah 80 kg sampah daun per bulan. Berapa drum komposter yang dibutuhkan untuk mengolah 180 kg sampah daun per bulan?", a: "9" },
+                { q: "Siswa menggunakan 9 liter air hujan untuk menyiram 18 pot bibit mahoni. Berapa liter air hujan yang dibutuhkan untuk menyiram 30 pot bibit mahoni?", a: "15" },
+                { q: "12 botol ecobrick dapat digunakan untuk membuat 2 bata susun bangku taman. Berapa botol ecobrick yang dibutuhkan untuk membuat 9 bata susun bangku taman?", a: "54" },
+                { q: "Di nursery, 5 meter pipa vertikultur dapat menampung 25 bibit kangkung. Berapa bibit kangkung yang dapat ditampung dalam 12 meter pipa vertikultur?", a: "60" },
+                { q: "Untuk membuat 10 liter pupuk organik cair, dibutuhkan 4 kg gula merah. Berapa kg gula merah yang dibutuhkan untuk membuat 25 liter pupuk organik cair?", a: "10" },
+                { q: "Jika 8 kg minyak jelantah menghasilkan 6 kg sabun cuci daur ulang, berapa kg sabun cuci daur ulang yang dihasilkan dari 20 kg minyak jelantah?", a: "15" }
+            ],
+            level5: [
+                { q: "Jika 4 siswa kader Adiwiyata dapat membersihkan kebun sekolah dalam 6 jam, berapa jam yang dibutuhkan oleh 8 siswa untuk membersihkan kebun yang sama?", a: "3" },
+                { q: "Untuk menyiram kebun sekolah, dibutuhkan 3 selang air selama 20 menit. Jika hanya menggunakan 2 selang air, berapa menit waktu yang dibutuhkan?", a: "30" },
+                { q: "Jika 4 kader Adiwiyata dapat memilah sampah di bank sampah dalam 3 hari, berapa hari yang dibutuhkan jika dikerjakan oleh 6 kader?", a: "2" },
+                { q: "Pembuatan 50 wadah ecobrick selesai dalam 12 hari oleh 5 siswa. Berapa hari yang dibutuhkan jika dikerjakan oleh 10 siswa?", a: "6" },
+                { q: "Tim Adiwiyata menggunakan 3 kran hemat air untuk mengisi kolam penampungan air hujan dalam 4 jam. Berapa jam waktu yang dibutuhkan jika menggunakan 2 kran hemat air?", a: "6" },
+                { q: "Persediaan air wudhu daur ulang cukup untuk menyiram kebun oleh 15 siswa selama 8 hari. Jika jumlah siswa yang menyiram menjadi 20 siswa, persediaan air akan habis dalam... hari", a: "6" },
+                { q: "Suatu proyek penanaman 100 bibit pohon selesai dalam 10 hari oleh 6 siswa. Berapa hari waktu yang dibutuhkan jika penanaman dikerjakan oleh 15 siswa?", a: "4" },
+                { q: "Untuk memanen pupuk kompos dari 5 komposter, dibutuhkan 8 siswa selama 3 jam. Jika hanya ada 6 siswa, berapa jam waktu yang dibutuhkan?", a: "4" },
+                { q: "Persediaan pupuk cair organik cukup untuk 12 pot tanaman selama 15 hari. Jika tanaman bertambah menjadi 20 pot, pupuk cair akan habis dalam... hari", a: "9" },
+                { q: "Kecepatan kerja bakti kader lingkungan 60 m²/jam memerlukan waktu 4 jam untuk membersihkan seluruh kebun. Jika kecepatan ditingkatkan menjadi 80 m²/jam, berapa jam waktu yang dibutuhkan?", a: "3" },
+                { q: "Untuk mengosongkan bak penampungan air hujan, digunakan 4 pompa hemat energi selama 6 jam. Berapa jam yang dibutuhkan jika digunakan 3 pompa?", a: "8" },
+                { q: "Pencacahan sampah organik dengan 2 mesin pencacah selesai dalam 9 jam. Berapa jam yang dibutuhkan jika sekolah menambah mesin menjadi 3 mesin pencacah?", a: "6" },
+                { q: "Persediaan pakan organik untuk ikan di kolam Adiwiyata habis dalam 20 hari untuk 30 ekor ikan. Jika ikan bertambah menjadi 40 ekor, pakan akan habis dalam... hari", a: "15" },
+                { q: "Pembuatan 120 lubang biopori oleh 10 siswa selesai dalam 6 hari. Berapa hari yang dibutuhkan jika pembuatan biopori dikerjakan oleh 12 siswa?", a: "5" },
+                { q: "Untuk mengecat 30 pot daur ulang, 3 siswa membutuhkan waktu 8 jam. Berapa jam yang dibutuhkan oleh 6 siswa untuk mengecat pot yang sama?", a: "4" },
+                { q: "Persediaan larutan MOL untuk 16 komposter cukup untuk 15 hari. Jika komposter bertambah menjadi 20 buah, larutan MOL akan habis dalam... hari", a: "12" },
+                { q: "Pembersihan area drainase sekolah oleh 8 siswa selesai dalam 9 jam. Berapa siswa yang dibutuhkan agar pembersihan selesai dalam 6 jam?", a: "12" },
+                { q: "Pengolahan 200 kg sampah daur ulang oleh 5 siswa membutuhkan waktu 12 hari. Berapa hari yang dibutuhkan jika dikerjakan oleh 15 siswa?", a: "4" },
+                { q: "Penyiraman kebun hidroponik dengan 4 pipa irigasi selesai dalam 15 menit. Berapa menit waktu yang dibutuhkan jika digunakan 6 pipa irigasi?", a: "10" },
+                { q: "Pengumpulan 500 botol ecobrick oleh 12 siswa selesai dalam 10 hari. Berapa hari yang dibutuhkan jika pengumpulan dilakukan oleh 15 siswa?", a: "8" }
+            ]
+        };
+
+        const levels = ["level1", "level2", "level3", "level4", "level5"];
+        let currentLevel = 0;
+        let currentQuestionIndex = 0;
+        let currentScore = 0;
+        let levelQuestions = [];
+        let totalScore = 0;
+        let studentName = "";
+        let unlockedLevel = 1;
+
+        const introScreen = document.getElementById('intro-screen');
+        const levelSelectionScreen = document.getElementById('level-selection-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const levelInfo = gameScreen.querySelector('.level-info h2');
+        const levelDesc = gameScreen.querySelector('.level-info p');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const feedbackText = document.getElementById('feedback-text');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const backToLevelsBtn = document.getElementById('back-to-levels-btn');
+        const studentNameInput = document.getElementById('student-name-input');
+        const studentNameFinalDisplay = document.getElementById('student-name-final');
+        const ratioInputGroup = document.getElementById('ratio-input-group');
+        const singleAnswerInput = document.getElementById('single-answer-input');
+        const answerInput1 = document.getElementById('answer-input-1');
+        const answerInput2 = document.getElementById('answer-input-2');
+
+        const levelDescriptions = {
+            level1: "Pengenalan Rasio: Tuliskan perbandingan bahan-bahan kelestarian lingkungan.",
+            level2: "Menyederhanakan Rasio: Sederhanakan perbandingan hasil pilah sampah!",
+            level3: "Menghitung Jumlah: Cari tahu takaran bahan kompos/pupuk yang dibutuhkan.",
+            level4: "Perbandingan Senilai: Jika jumlah bibit bertambah, kebutuhan lahan/pupuk bertambah.",
+            level5: "Perbandingan Berbalik Nilai: Jika kader bertambah, waktu kerja bakti berkurang."
+        };
+
+        function startGame() {
+            studentName = studentNameInput.value.trim();
+            if (studentName) {
+                unlockedLevel = parseInt(localStorage.getItem(studentName + '_unlockedLevel')) || 1;
+                showLevelSelection();
+            } else {
+                alert("Masukkan nama kamu terlebih dahulu!");
+            }
+        }
+
+        function showLevelSelection() {
+            introScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            levelSelectionScreen.classList.remove('hidden');
+            const levelButtons = document.querySelectorAll('.level-button');
+            levelButtons.forEach((button, index) => {
+                const levelNum = index + 1;
+                button.classList.remove('locked');
+                button.innerHTML = `Level ${levelNum}`;
+                if (levelNum > unlockedLevel) {
+                    button.classList.add('locked');
+                    button.innerHTML = `<span class="lock-icon">🔒</span>`;
+                }
+            });
+        }
+
+        function selectLevel(levelNum) {
+            if (levelNum > unlockedLevel) {
+                alert("Selesaikan level sebelumnya untuk membuka level ini!");
+                return;
+            }
+            currentLevel = levelNum - 1;
+            levelSelectionScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            loadLevel();
+        }
+
+        function loadLevel() {
+            currentScore = 0;
+            currentQuestionIndex = 0;
+            scoreDisplay.textContent = currentScore;
+            feedbackText.textContent = '';
+            const levelKey = levels[currentLevel];
+            levelInfo.textContent = `Level ${currentLevel + 1}`;
+            levelDesc.textContent = levelDescriptions[levelKey];
+            
+            // Mengacak 20 soal dan mengambil 5 soal acak untuk dimainkan
+            levelQuestions = shuffleArray([...questions[levelKey]]).slice(0, 5);
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= levelQuestions.length) {
+                endLevel();
+                return;
+            }
+            const q = levelQuestions[currentQuestionIndex];
+            questionText.textContent = q.q;
+            submitBtn.style.display = 'inline-block';
+            nextBtn.classList.add('hidden');
+            backToLevelsBtn.classList.add('hidden');
+            
+            const isRatioLevel = currentLevel < 2;
+            ratioInputGroup.classList.toggle('hidden', !isRatioLevel);
+            singleAnswerInput.classList.toggle('hidden', isRatioLevel);
+
+            [answerInput1, answerInput2, singleAnswerInput].forEach(input => {
+                input.value = '';
+                input.disabled = false;
+            });
+        }
+
+        function checkAnswer() {
+            let userAnswer = '';
+            const correctAnswer = levelQuestions[currentQuestionIndex].a;
+            if (currentLevel < 2) {
+                userAnswer = `${answerInput1.value.trim()}:${answerInput2.value.trim()}`;
+            } else {
+                userAnswer = singleAnswerInput.value.trim();
+            }
+            let isCorrect = false;
+            if (currentLevel === 0) {
+                const userParts = userAnswer.split(':');
+                const correctParts = correctAnswer.split(':');
+                if (userParts.length === 2 && correctParts.length === 2 && parseFloat(userParts[1]) !== 0) {
+                    isCorrect = (parseFloat(userParts[0]) / parseFloat(userParts[1])) === (parseFloat(correctParts[0]) / parseFloat(correctParts[1]));
+                }
+            } else {
+                isCorrect = userAnswer === correctAnswer;
+            }
+
+            const questionScore = isCorrect ? 20 : 0;
+
+            if (isCorrect) {
+                currentScore += 20;
+                scoreDisplay.textContent = currentScore;
+                feedbackText.textContent = "Jawaban benar! 🎉";
+                feedbackText.className = 'feedback correct';
+            } else {
+                feedbackText.textContent = "Jawaban salah.";
+                feedbackText.className = 'feedback incorrect';
+            }
+            
+            sendDataToSheet(levelQuestions[currentQuestionIndex].q, userAnswer, isCorrect ? 'Benar' : 'Salah', questionScore);
+            
+            submitBtn.style.display = 'none';
+            nextBtn.classList.remove('hidden');
+            [answerInput1, answerInput2, singleAnswerInput].forEach(input => input.disabled = true);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            feedbackText.textContent = '';
+            showQuestion();
+        }
+
+        function endLevel() {
+            totalScore += currentScore;
+            const justCompletedLevel = currentLevel + 1;
+            const nextLevelToUnlock = currentLevel + 2;
+            const currentUnlocked = parseInt(localStorage.getItem(studentName + '_unlockedLevel')) || 1;
+
+            if (nextLevelToUnlock > currentUnlocked && currentScore >= 80) {
+                localStorage.setItem(studentName + '_unlockedLevel', nextLevelToUnlock);
+                unlockedLevel = nextLevelToUnlock;
+                alert(`Level ${justCompletedLevel} Selesai! Skor: ${currentScore}. Selamat, Misi Level ${justCompletedLevel + 1} terbuka!`);
+            } else if (currentScore < 80 && nextLevelToUnlock > currentUnlocked) {
+                 alert(`Level ${justCompletedLevel} Selesai! Skor: ${currentScore}. Kamu butuh skor minimal 80 untuk membuka level selanjutnya. Coba lagi ya!`);
+            } else {
+                alert(`Level ${justCompletedLevel} Selesai! Skor: ${currentScore}.`);
+            }
+            
+            if (justCompletedLevel === levels.length && currentScore >= 80) {
+                showEndScreen();
+            } else {
+                backToLevelsBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+            }
+        }
+
+        function showEndScreen() {
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            studentNameFinalDisplay.textContent = studentName;
+        }
+
+        function resetProgress() {
+            if (studentName && confirm("Apakah kamu yakin ingin mengulang semua progress untuk nama '" + studentName + "'? Level yang terbuka akan terkunci kembali.")) {
+                localStorage.removeItem(studentName + '_unlockedLevel');
+                unlockedLevel = 1;
+                showLevelSelection();
+            } else if (!studentName) {
+                alert("Silakan masukkan nama terlebih dahulu sebelum mereset progress.");
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        async function sendDataToSheet(question, answer, status, score) {
+            const params = {
+                nama: studentName,
+                level: `Level ${currentLevel + 1}`,
+                soal: question,
+                jawaban: answer,
+                status: status,
+                skor: score
+            };
+            const formData = new URLSearchParams(params).toString();
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+            } catch(error) {
+                console.error('Error saat mengirim data:', error);
+            }
+        }
+    </script>
+</body>
+</html>
